@@ -1,0 +1,98 @@
+PARSER_BEGIN(SQL)
+
+public class SQL {
+
+	public static void main (String args[]) throws ParseException {
+		try {
+			SQL parser = new SQL(System.in);
+			parser.Start();
+			System.out.print("Compilado com sucesso.\n");
+		}
+		catch (ParseException e) {
+			System.out.print("Erro de compilação\n" + e);
+		}		
+	}
+}
+
+PARSER_END(SQL)
+
+/* scanner */
+SKIP:
+{
+	" "
+|	"\n"
+|	"\t"
+|	"\r"	
+}
+
+TOKEN:
+{
+	<SELECT: "SELECT">	
+|	<COUNT:	"COUNT">
+|	<DISTINCT:	"DISTINCT">
+|	<AS:	"AS">
+|	<FROM:	"FROM">
+|	<ALL:	"*">	
+|	<COMMA:	",">
+|	<EQUALS: "=">
+|	<APOSTROPHE: "'">	
+|	<PARENTHESISO:	"(">
+|	<PARENTHESISC:	")">
+|	<WHERE:	"WHERE">
+|	<AND:	"AND">	
+|	<OR:	"OR">	
+|	<NOT:	"NOT">	
+|	<LIKE:	"LIKE">	
+}
+
+TOKEN:
+{
+	<ID: (["a"-"z"])+ (["a"-"z","0"-"9"])*>
+	<STRING: (["'"])+ (["a"-"z","0"-"9","%","_"])*+(["'"])>
+}
+
+/* parser */
+void Start(): {}
+{
+	<SELECT> ModifierA() <FROM> Final() <EOF>
+}
+
+void ModifierA(): {}
+{
+	Column()
+|	Distinct()
+|	Count()
+}
+
+void Column(): {}
+{
+	<ALL>
+|	<ID> (<COMMA> Column())*
+|	<ID> <EQUALS> <STRING>
+}
+
+void Count(): {}
+{
+	<COUNT> <PARENTHESISO> Distinct() <PARENTHESISC>
+|	<COUNT> <PARENTHESISO> <ALL> <PARENTHESISC> <AS> <ID>
+}
+
+void Distinct(): {}
+{
+	<DISTINCT> <ID>
+}
+
+void Final(): {}
+{
+	<ID>
+|	<PARENTHESISO> Start() <PARENTHESISC>
+|	<ID> <WHERE> Column() (ModifierB())*
+}
+
+void ModifierB(): {}
+{
+	<AND> Column() (ModifierB)*
+|	<OR> Column() (ModifierB)*
+|	<NOT> Column() (ModifierB)*
+|	<LIKE> <STRING> (ModifierB)*
+}
